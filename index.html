@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日唯C · C语言学习助手</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  :root{
+    --accent:hsl(150 40% 90%);
+    --accent-strong:hsl(150 45% 38%);
+    --accent-text:#1b3b2c;
+    --bg:#f5f8f7;
+    --card:#ffffff;
+    --text:#243b33;
+    --muted:#6b7d76;
+    --border:#e3ece8;
+    --shadow:0 4px 22px rgba(20,60,45,.06);
+    --gold:#c9a227;
+  }
+  .hidden{display:none!important}
+  .container{max-width:920px;margin:0 auto;padding:28px 20px 60px}
+
+  /* 顶栏 */
+  header.topbar{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+  .topbar-inner{max-width:920px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;color:var(--text);cursor:pointer}
+  .logo .badge{width:34px;height:34px;border-radius:10px;background:var(--accent-strong);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+  .nav{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .nav-link{border:none;background:transparent;color:var(--muted);padding:8px 14px;border-radius:999px;cursor:pointer;font-size:14px;font-family:inherit}
+  .nav-link:hover{color:var(--text)}
+  .nav-link.active{background:var(--accent);color:var(--accent-text);font-weight:600}
+  .account-chip{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+  .account-chip .uid{background:var(--accent);color:var(--accent-text);padding:4px 10px;border-radius:999px;font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* 通用 */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+  .page-title{font-size:22px;margin:6px 0 18px;display:flex;align-items:center;gap:10px}
+  .page-title::before{content:"";width:6px;height:22px;border-radius:4px;background:var(--accent-strong)}
+  .btn{background:var(--accent-strong);color:#fff;border:none;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:14px;font-family:inherit;font-weight:600;transition:.15s}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.55;cursor:not-allowed;filter:none}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--bg);color:var(--text)}
+  .btn-accent{background:var(--accent);color:var(--accent-text);border:1px solid var(--border)}
+
+  .page{display:none;animation:fade .25s ease}
+  .page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* 首页网格 */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  .home-card{transition:transform .15s ease, box-shadow .15s ease}
+  .home-card:hover{transform:translateY(-3px); box-shadow:0 10px 30px rgba(20,60,45,.12)}
+  .home-card .hc-label{font-size:13px;color:var(--muted)}
+  .home-card .hc-big{font-size:30px;font-weight:800;color:var(--text);margin:6px 0}
+  .home-card .hc-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+
+  /* 统计 */
+  .stat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;min-width:64px}
+  .stat-num{font-size:24px;font-weight:800;color:var(--accent-strong)}
+  .stat-label{font-size:12px;color:var(--muted)}
+  .stats-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+  .bar{width:100%;height:10px;background:var(--bg);border-radius:999px;overflow:hidden;margin-top:4px}
+  .bar-fill{height:100%;background:var(--accent-strong);border-radius:999px;transition:width .3s}
+
+  /* 进程 */
+  .prog-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .prog-form input[type=text],.prog-form select{padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px}
+  .prog-form #prog-title{flex:1;min-width:160px}
+  .prog-item{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:12px;margin-bottom:10px}
+  .prog-item .pi-title{font-weight:600}
+  .prog-item .pi-note{color:var(--muted);font-size:13px;margin-top:2px}
+  .prog-item .pi-actions{margin-left:auto;display:flex;gap:8px}
+  .status-badge{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+  .badge-todo{background:#eef1f0;color:#6b7d76}
+  .badge-doing{background:var(--accent);color:var(--accent-text)}
+  .badge-done{background:#d8f0e0;color:#1b6b3f}
+
+  /* 知识点/练习 */
+  .concepts{padding-left:18px;color:var(--text);margin:0}
+  .concepts li{margin:4px 0}
+  .opt{display:block;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer}
+  .opt:hover{background:var(--bg)}
+  .opt input{margin-right:8px}
+  .ex-input,.ex-textarea{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px}
+  .ex-textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace}
+  .ex-result{margin-top:14px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--bg)}
+  .tag-ok{color:#1b6b3f;font-weight:700}
+  .tag-no{color:#c0392b;font-weight:700}
+  .code{background:#0f2a20;color:#d6f5e3;padding:12px;border-radius:10px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;white-space:pre}
+  .ex-exp{color:var(--muted);margin-top:8px}
+
+  /* 奖励 */
+  .gold-text{color:var(--gold);font-weight:700}
+  .reward-line{font-size:22px;letter-spacing:3px;line-height:1.4}
+  .title-badge{background:linear-gradient(135deg,#fff8e6,#fffdf5);border:1px solid #f0dca0;border-radius:14px;padding:16px;text-align:center}
+  .title-badge .t{font-size:18px;font-weight:800;color:#b8860b}
+
+  /* 打卡 */
+  .strip{display:grid;grid-template-columns:repeat(14,1fr);gap:6px}
+  @media(max-width:520px){.strip{grid-template-columns:repeat(7,1fr)}}
+  .day{aspect-ratio:1;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);border:1px solid var(--border)}
+  .day.on{background:var(--accent-strong);color:#fff;border-color:var(--accent-strong)}
+  .day.today{border-color:var(--accent-strong);box-shadow:0 0 0 2px var(--accent) inset}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--bg);border:1px solid var(--border);margin-right:4px;vertical-align:middle}
+  .dot.on{background:var(--accent-strong);border-color:var(--accent-strong)}
+  .dot.today{border-color:var(--accent-strong);box-shadow:0 0 0 2px var(--accent) inset}
+
+  /* 刷题 */
+  .platform{display:flex;flex-direction:column;gap:6px}
+  .platform h3{margin:0;font-size:18px}
+  .platform p{margin:0;color:var(--muted);font-size:14px;flex:1}
+  .platform .btn{margin-top:8px;align-self:flex-start}
+
+  /* 个人中心 */
+  .avatar{width:64px;height:64px;border-radius:50%;background:var(--accent-strong);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin:0 auto}
+
+  /* 登录注册 */
+  .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#eef6f2,#f6faf8)}
+  .auth-card{width:100%;max-width:380px}
+  .tabs{display:flex;gap:8px;margin:14px 0}
+  .tab{flex:1;padding:10px;border:1px solid var(--border);background:#fff;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--muted)}
+  .tab.active{background:var(--accent-strong);color:#fff;border-color:var(--accent-strong)}
+  #auth-form label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+  #auth-form input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px}
+  .auth-msg{color:#c0392b;font-size:13px;min-height:18px;margin:10px 0 0}
+  .auth-hint{color:var(--muted);font-size:12px;margin-top:8px}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#243b33;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  footer.foot{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+
+<!-- 登录/注册视图 -->
+<div id="auth-view">
+  <div class="auth-wrap">
+    <div class="auth-card card">
+      <div class="logo" style="justify-content:center;margin-bottom:6px"><span class="badge">C</span> 每日唯C</div>
+      <p style="text-align:center;color:var(--muted);margin-top:0">记录你的 C 语言学习每一天</p>
+      <div class="tabs">
+        <button class="tab active" data-tab="login">登录</button>
+        <button class="tab" data-tab="register">注册</button>
+      </div>
+      <form id="auth-form" autocomplete="off">
+        <div id="auth-account-row">
+          <label for="auth-account">账号（11 位）</label>
+          <input type="text" id="auth-account" placeholder="例如 20261027001" autocomplete="off" maxlength="11">
+        </div>
+        <div>
+          <label for="auth-password">密码</label>
+          <input type="password" id="auth-password" autocomplete="off">
+        </div>
+        <div id="auth-confirm-row" class="hidden">
+          <label for="auth-confirm">确认密码</label>
+          <input type="password" id="auth-confirm" autocomplete="off">
+        </div>
+        <button type="submit" class="btn" id="auth-submit" style="width:100%;margin-top:14px">登录</button>
+        <p id="auth-msg" class="auth-msg"></p>
+        <p class="auth-hint" id="auth-hint"></p>
+      </form>
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+        <p style="text-align:center;color:var(--muted);font-size:13px;margin:0 0 10px">换设备？导入存档文件即可登录原账号</p>
+        <label class="btn btn-ghost" style="cursor:pointer;display:block;width:100%;text-align:center">导入存档文件<input type="file" id="auth-import-file" accept=".json,application/json" style="display:none"></label>
+        <details style="margin-top:10px"><summary style="cursor:pointer;color:var(--muted);font-size:12px;text-align:center">或粘贴存档文本</summary>
+          <textarea id="auth-import-text" class="ex-textarea" style="min-height:80px;margin-top:8px" placeholder="粘贴存档文本"></textarea>
+          <button class="btn" id="auth-import-paste" style="width:100%;margin-top:8px">导入并登录</button>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 应用视图 -->
+<div id="app-view" class="hidden">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="logo" id="logo"><span class="badge">C</span> 每日唯C</div>
+      <nav class="nav" id="nav">
+        <button class="nav-link" data-page="home">首页</button>
+        <button class="nav-link" data-page="progress">学习进程</button>
+        <button class="nav-link" data-page="checkin">打卡</button>
+        <button class="nav-link" data-page="knowledge">知识点</button>
+        <button class="nav-link" data-page="practice">刷题入口</button>
+        <button class="nav-link" data-page="profile">我的</button>
+      </nav>
+      <div class="account-chip"><span class="uid" id="account-chip-id" title="">账号 -</span></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 首页 -->
+    <section class="page" id="page-home">
+      <h2 class="page-title">今日概览</h2>
+      <div id="home-banner"></div>
+      <div id="home-dynamic"></div>
+    </section>
+
+    <!-- 学习进程 -->
+    <section class="page" id="page-progress">
+      <h2 class="page-title">学习进程管理</h2>
+      <div class="card">
+        <form id="progress-form" autocomplete="off">
+          <input type="hidden" id="prog-id">
+          <div class="prog-form">
+            <input type="text" id="prog-title" maxlength="60" placeholder="例如：指针与数组" required>
+            <select id="prog-status">
+              <option value="todo">未开始</option>
+              <option value="doing">学习中</option>
+              <option value="done">已完成</option>
+            </select>
+            <input type="text" id="prog-note" maxlength="200" placeholder="备注（选填）">
+            <button type="submit" class="btn">保存</button>
+            <button type="button" id="prog-cancel" class="btn btn-ghost" style="display:none">取消</button>
+          </div>
+        </form>
+      </div>
+      <div class="stats-row" id="prog-counts"></div>
+      <div id="prog-list"></div>
+    </section>
+
+    <!-- 打卡 -->
+    <section class="page" id="page-checkin">
+      <h2 class="page-title">每日打卡</h2>
+      <div id="checkin-dynamic"></div>
+    </section>
+
+    <!-- 知识点 -->
+    <section class="page" id="page-knowledge">
+      <h2 class="page-title">随机知识点</h2>
+      <div class="card" id="knowledge-card"></div>
+      <div style="text-align:center;margin-top:8px">
+        <button class="btn btn-ghost" id="know-next">换一个知识点</button>
+      </div>
+    </section>
+
+    <!-- 刷题入口 -->
+    <section class="page" id="page-practice">
+      <h2 class="page-title">刷题入口</h2>
+      <div class="grid">
+        <div class="card platform">
+          <h3>PTA 程序设计类实验辅助教学平台</h3>
+          <p>浙江大学推出的程序设计类实验辅助教学平台，题型丰富，非常适合课程作业与日常练习。</p>
+          <a class="btn" href="https://pintia.cn" target="_blank" rel="noopener">前往 PTA</a>
+        </div>
+        <div class="card platform">
+          <h3>洛谷 Luogu</h3>
+          <p>国内活跃的开源算法竞赛社区，题库庞大、氛围友好，适合循序渐进地刷题与能力提升。</p>
+          <a class="btn" href="https://www.luogu.com.cn" target="_blank" rel="noopener">前往洛谷</a>
+        </div>
+        <div class="card platform">
+          <h3>力扣 LeetCode</h3>
+          <p>全球知名算法与面试刷题平台，涵盖海量面试题、竞赛与题解，适合求职准备与算法训练。</p>
+          <a class="btn" href="https://leetcode.cn" target="_blank" rel="noopener">前往力扣</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 个人中心 -->
+    <section class="page" id="page-profile">
+      <h2 class="page-title">个人中心</h2>
+      <div id="profile-dynamic"></div>
+    </section>
+  </main>
+
+  <footer class="foot">每日唯C · 本地运行，数据保存在你的浏览器中</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============ 工具函数 ============ */
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function fmt(d){
+  var y=d.getFullYear();
+  var m=String(d.getMonth()+1).padStart(2,'0');
+  var day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function datePart(d){
+  return ''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+}
+function hashPw(s){
+  var h=5381; s=String(s);
+  for(var i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; }
+  return h.toString(16);
+}
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},2800);
+}
+
+/* ============ 本地存储（带降级） ============ */
+var Store=(function(){
+  var mem={}; var ok=true;
+  try{
+    var k='__dvc_test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k);
+  }catch(e){ ok=false; }
+  return {
+    available:ok,
+    get:function(k){ try{ return ok?localStorage.getItem(k):(k in mem?mem[k]:null); }catch(e){ return k in mem?mem[k]:null; } },
+    set:function(k,v){ try{ if(ok)localStorage.setItem(k,v); else mem[k]=v; }catch(e){ mem[k]=v; } }
+  };
+})();
+var DB_KEY='dvc_db_v1';
+
+function loadDB(){
+  try{ var s=Store.get(DB_KEY); return s?JSON.parse(s):null; }catch(e){ return null; }
+}
+function saveDB(){
+  try{ Store.set(DB_KEY, JSON.stringify(db)); }catch(e){ toast('保存失败：存储空间可能已满'); }
+}
+function defaultDB(){ return {users:{}, current:null}; }
+
+/* ============ 知识点库 ============ */
+var TOPICS=[
+  {id:1,title:"变量与数据类型",
+   intro:"C 语言中变量需要先声明后使用，常见基本类型有 int、float、double、char 等，不同类型占用不同字节数并决定可表示的数据范围。",
+   concepts:["声明与定义的区别","基本类型大小（int 通常 4 字节，double 8 字节）","变量命名规则与关键字","初始化的重要性"],
+   exercise:{type:"choice",
+     question:"在常见的 32/64 位编译器下，sizeof(int) 通常是？",
+     options:["1 字节","2 字节","4 字节","8 字节"],correct:2,
+     explanation:"绝大多数现代编译器下 int 占 4 字节（32 位），可表示约 -21 亿到 21 亿的整数。"}},
+  {id:2,title:"运算符与表达式",
+   intro:"C 提供算术、关系、逻辑、位运算等运算符；注意整数除法会截断小数，关系/逻辑表达式结果为 0 或 1。",
+   concepts:["整数除法截断","取模 % 仅用于整数","短路求值","自增 ++ 的前后置区别"],
+   exercise:{type:"fill",
+     question:"表达式 int a=5, b=a/2; 中 b 的值是 __（填写整数）。",
+     answer:"2",
+     explanation:"整数除法 5/2 结果为 2（向下截断小数部分），不会得到 2.5。"}},
+  {id:3,title:"控制流 if / switch",
+   intro:"条件语句根据表达式真假选择执行路径；switch 只能对整型/字符型做等值判断，记得写 break 防止穿透。",
+   concepts:["if-else 嵌套","switch 的 break 穿透","三目运算符","条件表达式求值为 0 或 1"],
+   exercise:{type:"choice",
+     question:"关于 switch 语句，下列说法错误的是？",
+     options:["switch 表达式应为整型或字符型","case 后必须是常量","缺少 break 会继续执行后续 case","default 必须放在最后"],correct:3,
+     explanation:"default 可以出现在任意位置，不一定要放在最后；只是通常习惯放末尾。"}},
+  {id:4,title:"循环 for / while",
+   intro:"for 循环适合已知次数的迭代，while 适合条件驱动，do-while 至少执行一次；注意避免死循环。",
+   concepts:["for 三要素","while 与 do-while 区别","break 与 continue","循环变量更新"],
+   exercise:{type:"fill",
+     question:"以下代码输出 0 到 9 共 10 个数，for(int i=0; i<__; i++) 横线应填 __。",
+     answer:"10",
+     explanation:"i 从 0 开始，条件 i<10 时执行，i 取值 0..9 共 10 次。"}},
+  {id:5,title:"数组",
+   intro:"数组是连续内存的同类元素集合，下标从 0 开始；C 不自带越界检查，越界访问会导致未定义行为。",
+   concepts:["下标从 0 开始","数组长度固定","遍历","二维数组按行存储","数组名常退化为指针"],
+   exercise:{type:"choice",
+     question:"定义 int a[5]; 合法的下标范围是？",
+     options:["1~5","0~4","0~5","1~4"],correct:1,
+     explanation:"5 个元素下标为 0,1,2,3,4，最大合法下标是 长度-1 = 4。"}},
+  {id:6,title:"函数",
+   intro:"函数封装可复用逻辑，先声明后调用；参数按值传递，想修改外部变量需传指针。",
+   concepts:["函数声明/定义","参数值传递","return","递归","作用域"],
+   exercise:{type:"fill",
+     question:"若想在函数内修改调用者的 int 变量，形参应声明为 int * 并在调用时传入该变量的 __（填写一个符号）。",
+     answer:"&",
+     explanation:"传地址用 & 取变量地址，形参用指针接收，从而能修改原变量。"}},
+  {id:7,title:"指针",
+   intro:"指针保存内存地址，* 解引用，& 取地址；指针运算按指向类型大小偏移，是 C 的强大也易错的特性。",
+   concepts:["指针与地址","* 与 &","指针算术","空指针 NULL","指针与数组关系"],
+   exercise:{type:"choice",
+     question:"对于 int a=10, *p=&a; 表达式 *p 的值是？",
+     options:["a 的地址","10","指针 p 自身地址","编译错误"],correct:1,
+     explanation:"p 指向 a，*p 解引用得到 a 的值 10。"}},
+  {id:8,title:"字符串",
+   intro:"C 字符串是以 '\\0' 结尾的 char 数组；常用 string.h 中的 strlen、strcpy、strcmp 等函数操作，注意缓冲区大小。",
+   concepts:["'\\0' 结尾","strlen 不含结束符","strcpy/strcat 需足够空间","字符串字面量","比较用 strcmp"],
+   exercise:{type:"fill",
+     question:"char s[]=\"hi\"; 数组 s 实际占用的字节数是 __（包含结束符）。",
+     answer:"3",
+     explanation:"\"hi\" 两个字符加结尾 '\\0'，共 3 字节。"}},
+  {id:9,title:"结构体",
+   intro:"struct 把多个不同类型成员组合成自定义类型，可通过 . 访问成员，通过指针用 -> 访问。",
+   concepts:["定义与声明",". 与 -> 成员访问","结构体数组","内存对齐","嵌套结构体"],
+   exercise:{type:"choice",
+     question:"已知 struct P{int x; int y;} p, *q=&p; 等价访问 p.y 的写法是？",
+     options:["q.y","(*q).y","q->x","&p.y"],correct:1,
+     explanation:"指针访问成员用 ->，即 q->y；(*q).y 也等价但更繁琐。"}},
+  {id:10,title:"文件操作",
+   intro:"用 FILE* 与 fopen/fclose 进行文件读写，模式如 \"r\" \"w\" \"a\"；操作后需 fclose 释放资源。",
+   concepts:["fopen 模式","fscanf/fprintf","fread/fwrite","错误检查","fclose"],
+   exercise:{type:"fill",
+     question:"以只写方式打开（不存在则创建，存在则清空）文件的模式字符串是 \"__\"。",
+     answer:"w",
+     explanation:"\"w\" 以写方式打开，文件不存在则创建，存在则清空内容。"}},
+  {id:11,title:"动态内存 malloc/free",
+   intro:"malloc 在堆上分配内存并返回 void*，需强制类型转换并检查非空；用完后 free 释放，避免内存泄漏。",
+   concepts:["malloc/calloc","强制类型转换","检查 NULL","free 配对","野指针"],
+   exercise:{type:"choice",
+     question:"关于 malloc，下列说法正确的是？",
+     options:["分配失败返回 NULL","无需 free","malloc 自动初始化为 0","返回 int 类型"],correct:0,
+     explanation:"malloc 失败时返回 NULL，因此使用前必须判空；堆内存不会自动释放，需手动 free。"}},
+  {id:12,title:"预处理与宏",
+   intro:"预处理在编译前展开，#define 定义宏，#include 包含头文件；宏只是文本替换，注意括号与副作用。",
+   concepts:["#define","不带/带参宏","文本替换陷阱","条件编译","头文件守卫"],
+   exercise:{type:"fill",
+     question:"宏 #define SQR(x) ((x)*(x)) 中多加括号是为了避免 __（填写四个汉字）。",
+     answer:"运算优先级",
+     explanation:"宏是文本替换，缺少括号会因运算符优先级导致错误结果，故用括号保护。"}},
+  {id:13,title:"枚举与联合体",
+   intro:"enum 定义命名整型常量，使代码可读；union 所有成员共用同一段内存，任一时刻只保存一个成员的值。",
+   concepts:["enum 默认值","联合体共享内存","与 struct 区别","大小计算"],
+   exercise:{type:"choice",
+     question:"关于 union，下列说法正确的是？",
+     options:["各成员有独立内存","所有成员共享同一内存","大小等于各成员大小之和","不能含数组"],correct:1,
+     explanation:"联合体成员共用同一段内存，其大小为最大成员的大小。"}},
+  {id:14,title:"递归",
+   intro:"函数直接或间接调用自身即为递归，必须包含终止条件，否则会栈溢出；常用于分治、树遍历等。",
+   concepts:["基准情形","递归步骤","调用栈","尾递归","与迭代互转"],
+   exercise:{type:"code",
+     question:"请用递归实现函数计算 n 的阶乘（n 为非负整数）。",
+     reference:"int fact(int n){\n    if(n <= 1) return 1;\n    return n * fact(n - 1);\n}",
+     explanation:"递归基线为 n<=1 时返回 1，否则返回 n*fact(n-1)。注意较大的 n 可能整数溢出。"}},
+  {id:15,title:"位运算",
+   intro:"位运算直接操作二进制位：& | ^ ~ << >>，常用于权限掩码、状态标志和底层优化。",
+   concepts:["与或非异或","左移乘2右移除2","异或交换","掩码","取反 ~"],
+   exercise:{type:"choice",
+     question:"将整数 x 的第 3 位（从 0 计）置 1 的表达式是？",
+     options:["x & (1<<3)","x | (1<<3)","x ^ (1<<3)","x >> 3"],correct:1,
+     explanation:"用或运算 | 可将特定位置 1，1<<3 得到第 3 位为 1 的掩码。"}}
+
+];
+
+/* ============ 全局状态 ============ */
+var db=null;
+var authTab='login';
+var editingId=null;
+var lastTopicId=null;
+
+function currentUser(){ return db.users[db.current]; }
+function statusLabel(s){ return s==='todo'?'未开始':s==='doing'?'学习中':'已完成'; }
+function badgeClass(s){ return s==='todo'?'badge-todo':s==='doing'?'badge-doing':'badge-done'; }
+function exTypeLabel(t){ return t==='choice'?'选择题':t==='fill'?'填空题':'编程题'; }
+function titleName(){ return '嵌入式标兵奶娃'; }
+
+function normalizeUser(u, account){
+  u.account=account;
+  if(typeof u.pw!=='string') u.pw='';
+  if(typeof u.createdAt!=='number') u.createdAt=Date.now();
+  if(typeof u.updatedAt!=='number') u.updatedAt=Date.now();
+  if(typeof u.username!=='string') u.username=account;
+  if(!Array.isArray(u.progress)) u.progress=[];
+  if(!Array.isArray(u.checkins)) u.checkins=[];
+  if(typeof u.gold!=='number') u.gold=0;
+  if(typeof u.xin!=='number') u.xin=0;
+  if(typeof u.awardedMilestones!=='number') u.awardedMilestones=0;
+  if(!Array.isArray(u.studiedTopics)) u.studiedTopics=[];
+  if(typeof u.practiceCount!=='number') u.practiceCount=0;
+  return u;
+}
+function touchUser(acc){ if(db && db.users && db.users[acc]) db.users[acc].updatedAt=Date.now(); }
+
+function uniqueDays(arr){ return new Set((arr||[])); }
+function calcStreak(arr){
+  var set=new Set(arr||[]);
+  var d=new Date();
+  if(!set.has(fmt(d))) d.setDate(d.getDate()-1);
+  var s=0;
+  while(set.has(fmt(d))){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+
+/* 推荐知识点：排除名称出现在学习进程中的主题 */
+function getAvailableTopics(u){
+  var titles=(u.progress||[]).map(function(p){return p.title.trim().toLowerCase();}).filter(Boolean);
+  var avail=TOPICS.filter(function(t){
+    var tt=t.title.toLowerCase();
+    return !titles.some(function(pt){ return pt.indexOf(tt)>=0 || tt.indexOf(pt)>=0; });
+  });
+  return avail.length?avail:TOPICS;
+}
+
+/* 奖励：连续打卡每满 3 天得 1 金；集满 3 金合成 1 鑫；鑫在前、金在后 */
+function processRewards(u){
+  var S=calcStreak(u.checkins);
+  if(S===1){ u.awardedMilestones=0; } // 连续中断后重新起步
+  if(S>=3){
+    var m=Math.floor(S/3);
+    while(u.awardedMilestones<m){
+      u.awardedMilestones++;
+      u.gold++;
+    }
+  }
+  while(u.gold>=3){ u.gold-=3; u.xin++; }
+}
+function rewardText(u){
+  var s='';
+  for(var i=0;i<u.xin;i++) s+='鑫';
+  for(var j=0;j<u.gold;j++) s+='金';
+  return s||'（暂无，连续打卡 3 天即可获得金字）';
+}
+
+/* 用户名唯一性 */
+function isUsernameTaken(name, selfAccount){
+  name=String(name||'').trim();
+  var keys=Object.keys(db.users);
+  for(var i=0;i<keys.length;i++){
+    var acc=keys[i];
+    if(acc===selfAccount) continue;
+    var ou=db.users[acc];
+    if((ou.username||'')===name) return true;
+    if(acc===name) return true; // 不能与他人的账号名重复
+  }
+  return false;
+}
+
+/* ============ 存档导出 / 导入（应对本地存储禁用 + 跨设备互通） ============ */
+var SAVE_MARKER='MEIRIWEIC_SAVE_V1';
+function buildSave(){ return { marker:SAVE_MARKER, version:1, exportedAt:Date.now(), db:db }; }
+function downloadSave(){
+  try{
+    var data=JSON.stringify(buildSave());
+    var blob=new Blob([data],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='每日唯C存档_'+datePart(new Date())+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ try{URL.revokeObjectURL(url);}catch(e){} },1000);
+    return true;
+  }catch(e){ return false; }
+}
+function copySaveText(){
+  var data=JSON.stringify(buildSave());
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(data).then(
+      function(){ toast('存档文本已复制，可粘贴到记事本/聊天保存'); },
+      function(){ fallbackCopy(data); });
+  } else { fallbackCopy(data); }
+}
+function fallbackCopy(text){
+  try{
+    var ta=document.createElement('textarea'); ta.value=text;
+    ta.style.position='fixed'; ta.style.top='-9999px'; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    toast('存档文本已复制');
+  }catch(e){ toast('复制失败，请改用「导出存档」下载文件'); }
+}
+function parseSave(text){
+  var obj;
+  try{ obj=JSON.parse(text); }catch(e){ return {ok:false, msg:'不是有效的 JSON 存档'}; }
+  if(!obj || obj.marker!==SAVE_MARKER || !obj.db || typeof obj.db!=='object' || !obj.db.users)
+    return {ok:false, msg:'文件不是「每日唯C」的存档'};
+  return {ok:true, db:obj.db};
+}
+function mergeSave(impDb){
+  var cnt=0;
+  Object.keys(impDb.users).forEach(function(acc){
+    try{
+      var u=normalizeUser(impDb.users[acc]||{}, acc);
+      var ex=db.users[acc];
+      if(!ex || (u.updatedAt||0) >= (ex.updatedAt||0)){ db.users[acc]=u; cnt++; }
+    }catch(e){}
+  });
+  saveDB();
+  return cnt;
+}
+function doImport(text, fromAuth){
+  var r=parseSave(text);
+  if(!r.ok){ toast(r.msg); return false; }
+  var n=mergeSave(r.db);
+  if(fromAuth){
+    if(r.db.current && db.users[r.db.current]) db.current=r.db.current;
+    saveDB();
+    if(db.current && db.users[db.current]){ enterApp(); toast('已导入存档并自动登录（更新 '+n+' 个账号）'); }
+    else { toast('已导入 '+n+' 个账号，请用账号密码登录'); }
+  } else {
+    updateChip();
+    if(document.getElementById('page-home').classList.contains('active')) renderHome();
+    renderProfile();
+    toast('存档已导入，更新 '+n+' 个账号');
+  }
+  return true;
+}
+
+/* ============ 主题色随打卡天数加深 ============ */
+function updateTheme(days){
+  var t=Math.min(days,100)/100;
+  var hue=150;
+  var sat=38+t*42;
+  var light=90 - t*50;
+  document.documentElement.style.setProperty('--accent', 'hsl('+hue+' '+sat+'% '+light+'%)');
+  document.documentElement.style.setProperty('--accent-text', light>62 ? '#1b3b2c' : '#ffffff');
+}
+
+/* ============ 页面路由 ============ */
+function showPage(name){
+  var pages=document.querySelectorAll('.page');
+  for(var i=0;i<pages.length;i++) pages[i].classList.remove('active');
+  var el=document.getElementById('page-'+name);
+  if(el) el.classList.add('active');
+  var links=document.querySelectorAll('.nav-link');
+  for(var j=0;j<links.length;j++) links[j].classList.toggle('active', links[j].dataset.page===name);
+  if(name==='home') renderHome();
+  else if(name==='progress') renderProgress();
+  else if(name==='checkin') renderCheckin();
+  else if(name==='knowledge') renderKnowledge();
+  else if(name==='profile') renderProfile();
+  window.scrollTo(0,0);
+}
+function goPage(p){ showPage(p); }
+function goCheckin(){ showPage('checkin'); }
+
+/* ============ 各页面渲染 ============ */
+function renderHome(){
+  var u=currentUser();
+  var days=uniqueDays(u.checkins);
+  var streak=calcStreak(u.checkins);
+  var today=fmt(new Date());
+  var doneToday=days.has(today);
+  updateTheme(days.size);
+  var counts={todo:0,doing:0,done:0};
+  u.progress.forEach(function(p){counts[p.status]++;});
+  var total=u.progress.length;
+  var donePct=total?Math.round(counts.done/total*100):0;
+  var avail=getAvailableTopics(u);
+  var tip=avail[Math.floor(Math.random()*avail.length)]||TOPICS[0];
+  var banner='';
+  if(streak>=7){
+    banner='<div class="title-badge" style="margin-bottom:18px">'+
+      '<div class="t">🏅 '+esc(titleName())+'</div>'+
+      '<div style="color:var(--muted);font-size:13px;margin-top:4px">连续打卡 '+streak+' 天，称号生效中（中断则消失）</div></div>';
+  }
+  document.getElementById('home-banner').innerHTML=banner;
+  var html=
+    '<div class="grid">'+
+      '<div class="card home-card"><div class="hc-label">今日打卡</div>'+
+        '<div class="hc-big">'+(doneToday?'已打卡':'未打卡')+'</div>'+
+        '<div class="hc-sub">连续 '+streak+' 天 · 累计 '+days.size+' 天</div>'+
+        '<button class="btn '+(doneToday?'btn-ghost':'btn-accent')+'" '+(doneToday?'disabled':'')+' onclick="goCheckin()">'+(doneToday?'今日已完成':'去打卡')+'</button></div>'+
+      '<div class="card home-card"><div class="hc-label">学习概览</div>'+
+        '<div class="hc-big">'+total+'</div>'+
+        '<div class="hc-sub">进程 · 已完成 '+counts.done+'（'+donePct+'%）</div>'+
+        '<button class="btn btn-ghost" onclick="goPage(\'progress\')">管理进程</button></div>'+
+      '<div class="card home-card"><div class="hc-label">随机知识点</div>'+
+        '<div class="hc-big" style="font-size:20px">'+esc(tip.title)+'</div>'+
+        '<div class="hc-sub">'+esc(tip.intro.slice(0,38))+'…</div>'+
+        '<button class="btn btn-ghost" onclick="goPage(\'knowledge\')">去学习</button></div>'+
+      '<div class="card home-card"><div class="hc-label">刷题入口</div>'+
+        '<div class="hc-big" style="font-size:20px">PTA · 洛谷 · 力扣</div>'+
+        '<div class="hc-sub">三大平台任你选</div>'+
+        '<button class="btn btn-ghost" onclick="goPage(\'practice\')">去刷题</button></div>'+
+    '</div>';
+  document.getElementById('home-dynamic').innerHTML=html;
+}
+
+function renderProgress(){
+  var u=currentUser();
+  var counts={todo:0,doing:0,done:0};
+  u.progress.forEach(function(p){counts[p.status]++;});
+  var total=u.progress.length;
+  var donePct=total?Math.round(counts.done/total*100):0;
+  var c=document.getElementById('prog-counts');
+  c.innerHTML=
+    '<div class="stat"><span class="stat-num">'+total+'</span><span class="stat-label">总进程</span></div>'+
+    '<div class="stat"><span class="stat-num">'+counts.todo+'</span><span class="stat-label">未开始</span></div>'+
+    '<div class="stat"><span class="stat-num">'+counts.doing+'</span><span class="stat-label">学习中</span></div>'+
+    '<div class="stat"><span class="stat-num">'+counts.done+'</span><span class="stat-label">已完成</span></div>'+
+    '<div class="stat" style="flex:1;min-width:150px"><div class="bar"><div class="bar-fill" style="width:'+donePct+'%"></div></div>'+
+    '<span class="stat-label">完成度 '+donePct+'%</span></div>';
+  var list=document.getElementById('prog-list');
+  if(total===0){ list.innerHTML='<p style="color:var(--muted)">还没有学习进程，在上方添加一个开始吧～</p>'; return; }
+  list.innerHTML=u.progress.map(function(p){
+    return '<div class="prog-item"><div><div class="pi-title">'+esc(p.title)+'</div>'+
+      (p.note?'<div class="pi-note">'+esc(p.note)+'</div>':'')+'</div>'+
+      '<span class="status-badge '+badgeClass(p.status)+'">'+statusLabel(p.status)+'</span>'+
+      '<div class="pi-actions"><button class="btn btn-ghost" data-edit="'+p.id+'">编辑</button>'+
+      '<button class="btn btn-ghost" data-del="'+p.id+'">删除</button></div></div>';
+  }).join('');
+  Array.prototype.forEach.call(list.querySelectorAll('[data-edit]'),function(b){ b.onclick=function(){editProgress(b.dataset.edit);}; });
+  Array.prototype.forEach.call(list.querySelectorAll('[data-del]'),function(b){ b.onclick=function(){delProgress(b.dataset.del);}; });
+}
+
+function editProgress(id){
+  var u=currentUser();
+  var it=u.progress.find(function(p){return String(p.id)===String(id);});
+  if(!it) return;
+  editingId=id;
+  document.getElementById('prog-id').value=it.id;
+  document.getElementById('prog-title').value=it.title;
+  document.getElementById('prog-status').value=it.status;
+  document.getElementById('prog-note').value=it.note||'';
+  document.getElementById('prog-cancel').style.display='';
+  document.getElementById('prog-title').focus();
+  window.scrollTo(0,0);
+}
+function delProgress(id){
+  if(!confirm('确定删除该学习进程吗？')) return;
+  var u=currentUser();
+  u.progress=u.progress.filter(function(p){return String(p.id)!==String(id);});
+  touchUser(db.current);
+  saveDB(); renderProgress(); toast('已删除');
+}
+
+function renderCheckin(){
+  var u=currentUser();
+  var days=uniqueDays(u.checkins);
+  updateTheme(days.size);
+  var streak=calcStreak(u.checkins);
+  var today=fmt(new Date());
+  var doneToday=days.has(today);
+  var strip='<div class="strip">';
+  for(var i=13;i>=0;i--){
+    var d=new Date(); d.setDate(d.getDate()-i);
+    var ds=fmt(d); var on=days.has(ds); var isT=ds===today;
+    strip+='<div class="day '+(on?'on':'')+' '+(isT?'today':'')+'" title="'+ds+'">'+d.getDate()+'</div>';
+  }
+  strip+='</div>';
+  var html=
+    '<div class="card" style="text-align:center">'+
+      '<div style="font-size:15px;color:var(--muted)">'+(doneToday?'今天已打卡 🎉':'今天还没打卡')+'</div>'+
+      '<div style="font-size:42px;font-weight:800;margin:8px 0;color:var(--accent-strong)">'+streak+
+        '<span style="font-size:16px;color:var(--muted);font-weight:500"> 天连续</span></div>'+
+      '<div style="color:var(--muted);margin-bottom:6px">累计打卡 '+days.size+' 天</div>'+
+      '<div style="font-size:13px;color:var(--muted);margin-bottom:14px">连续 3 天得「金」· 满 7 天获「'+esc(titleName())+'」</div>'+
+      '<button class="btn '+(doneToday?'btn-ghost':'btn-accent')+'" id="checkin-btn" '+(doneToday?'disabled':'')+'>'+(doneToday?'今日已打卡':'立即打卡')+'</button>'+
+    '</div>'+
+    '<div class="card"><h4 style="margin:0 0 12px">最近 14 天</h4>'+strip+
+      '<div style="display:flex;gap:14px;margin-top:12px;color:var(--muted);font-size:13px;flex-wrap:wrap">'+
+      '<span><i class="dot on"></i> 已打卡</span><span><i class="dot"></i> 未打卡</span><span><i class="dot today"></i> 今天</span></div></div>';
+  document.getElementById('checkin-dynamic').innerHTML=html;
+  var btn=document.getElementById('checkin-btn');
+  if(btn && !doneToday){
+    btn.onclick=function(){
+      u.checkins.push(today);
+      processRewards(u);
+      touchUser(db.current);
+      saveDB(); renderCheckin(); renderHome();
+      toast('打卡成功，坚持就是胜利！');
+    };
+  }
+}
+
+function renderKnowledge(){
+  var u=currentUser();
+  var avail=getAvailableTopics(u);
+  var topic;
+  if(lastTopicId && avail.length>1){
+    topic=avail.find(function(t){return t.id!==lastTopicId;})||avail[0];
+  } else {
+    topic=avail[Math.floor(Math.random()*avail.length)]||TOPICS[0];
+  }
+  lastTopicId=topic.id;
+  var inProg=u.progress.some(function(p){return p.title.trim().toLowerCase()===topic.title.toLowerCase();});
+  var card=document.getElementById('knowledge-card');
+  card.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">'+
+      '<h3 style="margin:0;font-size:20px">'+esc(topic.title)+'</h3>'+
+      '<button class="btn btn-ghost" id="know-add" '+(inProg?'disabled':'')+'>'+(inProg?'已在进程中':'+ 加入进程')+'</button>'+
+    '</div>'+
+    '<p style="color:var(--muted);margin:10px 0 4px">'+esc(topic.intro)+'</p>'+
+    '<h4 style="margin:16px 0 6px">关键概念</h4>'+
+    '<ul class="concepts">'+topic.concepts.map(function(c){return '<li>'+esc(c)+'</li>';}).join('')+'</ul>'+
+    '<div class="exercise" id="exercise-box"></div>';
+  renderExercise(topic);
+  var addBtn=document.getElementById('know-add');
+  addBtn.onclick=function(){
+    if(inProg) return;
+    u.progress.push({id:Date.now(),title:topic.title,status:'doing',note:'',createdAt:Date.now()});
+    touchUser(db.current);
+    saveDB();
+    addBtn.disabled=true; addBtn.textContent='已在进程中';
+    toast('已加入学习进程（学习中）');
+  };
+}
+
+function renderExercise(topic){
+  var ex=topic.exercise;
+  var box=document.getElementById('exercise-box');
+  var html='<h4 style="margin:18px 0 8px">练习（'+exTypeLabel(ex.type)+'）</h4>'+
+    '<p>'+esc(ex.question)+'</p>';
+  if(ex.type==='choice'){
+    html+=ex.options.map(function(o,i){return '<label class="opt"><input type="radio" name="exopt" value="'+i+'"> '+esc(o)+'</label>';}).join('');
+  } else if(ex.type==='fill'){
+    html+='<input type="text" id="ex-fill" class="ex-input" placeholder="输入你的答案" autocomplete="off">';
+  } else if(ex.type==='code'){
+    html+='<textarea id="ex-code" class="ex-textarea" placeholder="在此编写你的代码（提交后查看参考答案）"></textarea>';
+  }
+  html+='<div style="margin-top:12px"><button class="btn" id="ex-submit">提交答案</button></div>';
+  html+='<div id="ex-result" class="ex-result hidden"></div>';
+  box.innerHTML=html;
+  document.getElementById('ex-submit').onclick=function(){ showExerciseResult(topic); };
+}
+
+function showExerciseResult(topic){
+  var ex=topic.exercise;
+  var res=document.getElementById('ex-result');
+  res.classList.remove('hidden');
+  var correct=true, userAns='';
+  if(ex.type==='choice'){
+    var sel=document.querySelector('input[name=exopt]:checked');
+    if(!sel){ toast('请先选择一个选项'); res.classList.add('hidden'); return; }
+    var idx=+sel.value; correct=(idx===ex.correct); userAns=ex.options[idx];
+  } else if(ex.type==='fill'){
+    userAns=(document.getElementById('ex-fill').value||'').trim();
+    var norm=function(s){return s.trim().toLowerCase().replace(/\s+/g,'');};
+    correct=(norm(userAns)===norm(ex.answer));
+  } else {
+    userAns='(已提交代码)';
+  }
+  // 记录学习统计
+  var u=currentUser();
+  u.practiceCount=(u.practiceCount||0)+1;
+  if(u.studiedTopics.indexOf(topic.id)<0) u.studiedTopics.push(topic.id);
+  touchUser(db.current);
+  saveDB();
+  var html='';
+  html+='<div style="margin-bottom:8px">'+(correct?'<span class="tag-ok">回答正确 ✓</span>':'<span class="tag-no">回答错误 ✗</span>')+'</div>';
+  if(ex.type==='choice'){
+    html+='<p>正确答案：<b>'+esc(ex.options[ex.correct])+'</b></p>';
+  } else if(ex.type==='fill'){
+    html+='<p>参考答案：<b>'+esc(ex.answer)+'</b>　你的答案：<b>'+esc(userAns)+'</b></p>';
+  } else {
+    html+='<p>参考代码：</p><pre class="code">'+esc(ex.reference)+'</pre>';
+  }
+  html+='<p class="ex-exp"><b>解析：</b>'+esc(ex.explanation)+'</p>';
+  html+='<div class="ex-exp">相关题型：选择题 / 填空题 / 编程题，可<b>自行选做</b>其他知识点练习。</div>';
+  html+='<p class="ex-exp">已记录：已学知识点 <b>'+u.studiedTopics.length+'</b> 个 · 已刷题 <b>'+u.practiceCount+'</b> 次（个人中心可查看）。</p>';
+  html+='<div style="margin-top:10px"><button class="btn btn-ghost" onclick="goPage(\'knowledge\')">换个知识点练习</button></div>';
+  res.innerHTML=html;
+}
+
+function renderProfile(){
+  var u=currentUser();
+  var days=uniqueDays(u.checkins);
+  var streak=calcStreak(u.checkins);
+  var reg=new Date(u.createdAt);
+  var hasTitle=streak>=7;
+  var html=
+    '<div class="card" style="text-align:center">'+
+      '<div class="avatar">'+esc(/^\d+$/.test(u.username||'')?'C':(u.username||u.account).slice(0,1))+'</div>'+
+      '<h3 style="margin:10px 0 2px">'+esc(u.username||u.account)+'</h3>'+
+      '<div style="color:var(--muted);font-size:13px">账号 '+esc(u.account)+' · 注册于 '+fmt(reg)+'</div>'+
+    '</div>'+
+    (hasTitle?
+      '<div class="title-badge" style="margin-bottom:18px"><div class="t">🏅 '+esc(titleName())+'</div>'+
+      '<div style="color:var(--muted);font-size:13px;margin-top:4px">连续打卡 '+streak+' 天生效中</div></div>'
+      :'')+
+    '<div class="card"><div class="stats-row" style="margin-bottom:0">'+
+      '<div class="stat"><span class="stat-num">'+days.size+'</span><span class="stat-label">累计打卡</span></div>'+
+      '<div class="stat"><span class="stat-num">'+streak+'</span><span class="stat-label">连续打卡</span></div>'+
+      '<div class="stat"><span class="stat-num">'+u.progress.length+'</span><span class="stat-label">学习进程</span></div>'+
+      '<div class="stat"><span class="stat-num">'+u.studiedTopics.length+'</span><span class="stat-label">已学知识点</span></div>'+
+      '<div class="stat"><span class="stat-num">'+u.practiceCount+'</span><span class="stat-label">已刷题</span></div>'+
+    '</div></div>'+
+    '<div class="card"><h4 style="margin:0 0 10px">奖励收集</h4>'+
+      '<div class="reward-line gold-text">'+esc(rewardText(u))+'</div>'+
+      '<p style="color:var(--muted);font-size:13px;margin:8px 0 0">累计：金 '+u.gold+' · 鑫 '+u.xin+'（连续 3 天得金，3 金合成鑫，鑫在前金在后）</p>'+
+      (hasTitle?'<p style="color:var(--muted);font-size:13px;margin:6px 0 0">已获称号：'+esc(titleName())+'（连续中断将消失）</p>'
+              :'<p style="color:var(--muted);font-size:13px;margin:6px 0 0">称号：连续打卡满 7 天可获「'+esc(titleName())+'」</p>')+
+    '</div>'+
+    '<div class="card"><h4 style="margin:0 0 10px">用户名设置</h4>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
+        '<input type="text" id="username-input" maxlength="20" value="'+esc(u.username||'')+'" style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;min-width:160px">'+
+        '<button class="btn" id="username-save">保存用户名</button>'+
+      '</div>'+
+      '<p style="color:var(--muted);font-size:13px;margin:8px 0 0">用户名在所有用户中不可重复（也不能与他人的账号名相同）。</p>'+
+    '</div>'+
+    '<div class="card"><h4 style="margin:0 0 10px">数据存档（跨设备互通）</h4>'+
+      '<p style="color:var(--muted);font-size:13px;margin:0 0 12px">浏览器可能禁用本地存储或换设备后数据丢失。导出存档文件，在另一台设备（手机/电脑）导入即可互通账号与全部学习数据。</p>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+        '<button class="btn" id="profile-export">导出存档</button>'+
+        '<button class="btn btn-ghost" id="profile-copy">复制存档文本</button>'+
+        '<label class="btn btn-ghost" style="cursor:pointer">导入存档文件<input type="file" id="profile-import-file" accept=".json,application/json" style="display:none"></label>'+
+      '</div>'+
+      '<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--muted);font-size:13px">或粘贴存档文本</summary>'+
+        '<textarea id="profile-import-text" class="ex-textarea" style="min-height:90px;margin-top:8px" placeholder="把导出的存档文本粘贴到这里"></textarea>'+
+        '<button class="btn" id="profile-import-paste" style="margin-top:8px">导入</button>'+
+      '</details>'+
+    '</div>'+
+    '<div class="card"><div style="display:flex;gap:10px;flex-wrap:wrap">'+
+      '<button class="btn btn-ghost" id="profile-logout">退出登录</button>'+
+      '<button class="btn btn-ghost" id="profile-del" style="color:#c0392b;border-color:#f0c9c4">注销账号</button>'+
+    '</div></div>';
+  document.getElementById('profile-dynamic').innerHTML=html;
+  document.getElementById('profile-logout').onclick=logout;
+  document.getElementById('profile-del').onclick=function(){
+    if(confirm('确定注销账号吗？该账号下的所有学习进程与打卡记录将被删除，且无法恢复。')){
+      delete db.users[db.current];
+      db.current=null; saveDB(); showAuth(); toast('账号已注销');
+    }
+  };
+  document.getElementById('username-save').onclick=function(){
+    var nv=document.getElementById('username-input').value.trim();
+    if(nv.length<1){ toast('用户名不能为空'); return; }
+    if(isUsernameTaken(nv, db.current)){ toast('该用户名已被占用，请换一个'); return; }
+    u.username=nv; touchUser(db.current); saveDB(); updateChip(); renderProfile(); toast('用户名已更新');
+  };
+  // 存档导出 / 导入（个人中心）
+  var exBtn=document.getElementById('profile-export');
+  if(exBtn) exBtn.onclick=function(){
+    if(downloadSave()) toast('存档已下载：每日唯C存档_'+datePart(new Date())+'.json');
+    else copySaveText();
+  };
+  var cpBtn=document.getElementById('profile-copy');
+  if(cpBtn) cpBtn.onclick=copySaveText;
+  var imf=document.getElementById('profile-import-file');
+  if(imf) imf.onchange=function(e){
+    var f=e.target.files&&e.target.files[0]; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){ doImport(String(rd.result), false); };
+    rd.readAsText(f); e.target.value='';
+  };
+  var imp=document.getElementById('profile-import-paste');
+  if(imp) imp.onclick=function(){
+    var t=document.getElementById('profile-import-text').value;
+    if(!t.trim()){ toast('请先粘贴存档文本'); return; }
+    doImport(t, false);
+  };
+}
+
+function updateChip(){
+  var u=currentUser();
+  var chip=document.getElementById('account-chip-id');
+  chip.textContent=u.username||u.account;
+  chip.title='账号 '+u.account;
+}
+
+/* ============ 登录 / 注册 ============ */
+function attachAuth(){
+  var tabs=document.querySelectorAll('.tab');
+  Array.prototype.forEach.call(tabs,function(t){
+    t.onclick=function(){
+      Array.prototype.forEach.call(tabs,function(x){x.classList.remove('active');});
+      t.classList.add('active');
+      authTab=t.dataset.tab;
+      document.getElementById('auth-account-row').classList.toggle('hidden', authTab==='register');
+      document.getElementById('auth-confirm-row').classList.toggle('hidden', authTab==='login');
+      document.getElementById('auth-submit').textContent=(authTab==='register'?'注册并领取账号':'登录');
+      document.getElementById('auth-msg').textContent='';
+    };
+  });
+  var hint=document.getElementById('auth-hint');
+  if(hint) hint.textContent='账号为 11 位：注册日期(8位)+当日序号(3位)，如 20261027001；每日限注册 999 名。';
+  document.getElementById('auth-form').onsubmit=function(e){
+    e.preventDefault();
+    var pw=document.getElementById('auth-password').value;
+    var msgEl=document.getElementById('auth-msg');
+    msgEl.textContent='';
+    if(authTab==='register'){
+      var cf=document.getElementById('auth-confirm').value;
+      if(pw.length<4){ msgEl.textContent='密码至少 4 位'; return; }
+      if(pw!==cf){ msgEl.textContent='两次密码不一致'; return; }
+      var today=datePart(new Date());
+      var seq=1;
+      Object.keys(db.users).forEach(function(acc){
+        if(acc.indexOf(today)===0){ var s=parseInt(acc.slice(8),10); if(!isNaN(s) && s>=seq) seq=s+1; }
+      });
+      if(seq>999){ msgEl.textContent='今日注册名额已满（999），请明天再来'; return; }
+      var account=today+String(seq).padStart(3,'0');
+      var u=normalizeUser({pw:hashPw(pw),createdAt:Date.now()}, account);
+      db.users[account]=u; db.current=account; saveDB();
+      document.getElementById('auth-form').reset();
+      toast('注册成功！你的账号是 '+account+'，请牢记以便下次登录');
+      enterApp();
+    } else {
+      var acc2=document.getElementById('auth-account').value.trim();
+      if(!db.users[acc2]){ msgEl.textContent='账号不存在'; return; }
+      if(db.users[acc2].pw!==hashPw(pw)){ msgEl.textContent='密码错误'; return; }
+      db.current=acc2; saveDB(); enterApp();
+    }
+  };
+  // 登录页导入存档（换设备互通）
+  var aif=document.getElementById('auth-import-file');
+  if(aif) aif.onchange=function(e){
+    var f=e.target.files&&e.target.files[0]; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){ doImport(String(rd.result), true); };
+    rd.readAsText(f); e.target.value='';
+  };
+  var aip=document.getElementById('auth-import-paste');
+  if(aip) aip.onclick=function(){
+    var t=document.getElementById('auth-import-text').value;
+    if(!t.trim()){ toast('请先粘贴存档文本'); return; }
+    doImport(t, true);
+  };
+}
+
+function enterApp(){
+  document.getElementById('auth-view').classList.add('hidden');
+  document.getElementById('app-view').classList.remove('hidden');
+  updateChip();
+  updateTheme(uniqueDays(currentUser().checkins).size);
+  if(!Store.available) toast('提示：当前浏览器禁用了本地存储，数据仅在本次浏览期间保留');
+  showPage('home');
+}
+function showAuth(){
+  document.getElementById('app-view').classList.add('hidden');
+  document.getElementById('auth-view').classList.remove('hidden');
+  authTab='login';
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.toggle('active', x.dataset.tab==='login');});
+  document.getElementById('auth-account-row').classList.remove('hidden');
+  document.getElementById('auth-confirm-row').classList.add('hidden');
+  document.getElementById('auth-submit').textContent='登录';
+  document.getElementById('auth-msg').textContent='';
+  document.getElementById('auth-form').reset();
+}
+function logout(){
+  db.current=null; saveDB(); showAuth();
+}
+
+/* ============ 进程表单 ============ */
+function attachProgressForm(){
+  var form=document.getElementById('progress-form');
+  form.onsubmit=function(e){
+    e.preventDefault();
+    var title=document.getElementById('prog-title').value.trim();
+    var status=document.getElementById('prog-status').value;
+    var note=document.getElementById('prog-note').value.trim();
+    if(!title){ toast('请输入进程名称'); return; }
+    var u=currentUser();
+    if(editingId){
+      var it=u.progress.find(function(p){return String(p.id)===String(editingId);});
+      if(it){ it.title=title; it.status=status; it.note=note; }
+      editingId=null;
+    } else {
+      u.progress.push({id:Date.now(),title:title,status:status,note:note,createdAt:Date.now()});
+    }
+    touchUser(db.current);
+    saveDB();
+    form.reset();
+    document.getElementById('prog-cancel').style.display='none';
+    renderProgress();
+    toast('已保存');
+  };
+  document.getElementById('prog-cancel').onclick=function(){
+    editingId=null; form.reset();
+    document.getElementById('prog-cancel').style.display='none';
+  };
+}
+
+/* ============ 导航 ============ */
+function attachNav(){
+  Array.prototype.forEach.call(document.querySelectorAll('.nav-link'),function(n){
+    n.onclick=function(){ showPage(n.dataset.page); };
+  });
+  document.getElementById('logo').onclick=function(){ showPage('home'); };
+  document.getElementById('know-next').onclick=renderKnowledge;
+}
+
+/* ============ 初始化 ============ */
+function showEnvNotice(){
+  var ua=navigator.userAgent||'';
+  var ios=/iPad|iPhone|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  if(ios && location.protocol==='file:'){
+    document.body.style.paddingTop='54px';
+    var b=document.createElement('div');
+    b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:999;background:#fff7e6;color:#8a5a00;border-bottom:1px solid #f0d9a8;padding:10px 16px;font-size:13px;line-height:1.5;text-align:center';
+    b.innerHTML='📱 iOS 限制：iPhone/iPad 不能直接打开本地网页文件，本页仅在本次浏览有效、数据不保存。请在手机浏览器访问 http 链接（或电脑起服务后访问同一地址），即可像 App 一样正常使用并保存数据。';
+    document.body.appendChild(b);
+  }
+}
+
+function init(){
+  db=loadDB();
+  if(!db || typeof db!=='object'){ db=defaultDB(); saveDB(); }
+  if(!db.users || typeof db.users!=='object') db.users={};
+  if(!('current' in db)) db.current=null;
+  // 规范化旧数据
+  Object.keys(db.users).forEach(function(acc){ db.users[acc]=normalizeUser(db.users[acc], acc); });
+  if(db.current && !db.users[db.current]) db.current=null;
+  attachAuth();
+  attachNav();
+  attachProgressForm();
+  if(db.current){ enterApp(); } else { showAuth(); }
+  showEnvNotice();
+}
+init();
+</script>
+</body>
+</html>
