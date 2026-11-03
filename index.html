@@ -510,6 +510,38 @@ function rewardText(u){
   return s||'（暂无，连续打卡 3 天即可获得金字）';
 }
 
+/* ============ 累计打卡里程碑（新增：记录累计打卡天数） ============ */
+var CUM_TIERS=[
+  {d:7,   name:'入门学者'},
+  {d:30,  name:'坚持者'},
+  {d:100, name:'百日筑基'},
+  {d:365, name:'年度达人'}
+];
+function cumulativeTiers(days){
+  var earned=[], next=null;
+  for(var i=0;i<CUM_TIERS.length;i++){
+    var t=CUM_TIERS[i];
+    if(days>=t.d) earned.push(t.name);
+    else { next=t; break; }
+  }
+  var pct=0, nextName='';
+  if(next){ pct=Math.min(100, Math.round(days/next.d*100)); nextName=next.name+'（'+next.d+' 天）'; }
+  else { pct=100; nextName='已达成全部里程碑'; }
+  return {earned:earned, next:next, pct:pct, nextName:nextName};
+}
+function renderCumulativeCard(days){
+  var info=cumulativeTiers(days);
+  var badges=info.earned.length
+    ? info.earned.map(function(n){return '<span style="display:inline-block;background:var(--accent);color:var(--accent-text);border:1px solid var(--border);padding:4px 12px;border-radius:999px;font-weight:600;font-size:13px;margin:0 6px 6px 0">🏅 '+esc(n)+'</span>';}).join('')
+    : '<span style="color:var(--muted);font-size:13px">尚未解锁，继续加油！</span>';
+  return '<div class="card"><h4 style="margin:0 0 12px">累计打卡里程碑</h4>'+
+      '<div style="margin-bottom:12px">'+badges+'</div>'+
+      '<div class="bar"><div class="bar-fill" style="width:'+info.pct+'%"></div></div>'+
+      '<div style="color:var(--muted);font-size:13px;margin-top:8px">距下一里程碑「'+esc(info.nextName)+'」：已累计 '+days+' 天（'+info.pct+'%）</div>'+
+      '<div style="color:var(--muted);font-size:12px;margin-top:6px">里程碑：7 天｜30 天｜100 天｜365 天</div>'+
+    '</div>';
+}
+
 /* 用户名唯一性 */
 function isUsernameTaken(name, selfAccount){
   name=String(name||'').trim();
@@ -736,7 +768,8 @@ function renderCheckin(){
     '</div>'+
     '<div class="card"><h4 style="margin:0 0 12px">最近 14 天</h4>'+strip+
       '<div style="display:flex;gap:14px;margin-top:12px;color:var(--muted);font-size:13px;flex-wrap:wrap">'+
-      '<span><i class="dot on"></i> 已打卡</span><span><i class="dot"></i> 未打卡</span><span><i class="dot today"></i> 今天</span></div></div>';
+      '<span><i class="dot on"></i> 已打卡</span><span><i class="dot"></i> 未打卡</span><span><i class="dot today"></i> 今天</span></div></div>'+
+    renderCumulativeCard(days.size);
   document.getElementById('checkin-dynamic').innerHTML=html;
   var btn=document.getElementById('checkin-btn');
   if(btn && !doneToday){
@@ -868,6 +901,7 @@ function renderProfile(){
       (hasTitle?'<p style="color:var(--muted);font-size:13px;margin:6px 0 0">已获称号：'+esc(titleName())+'（连续中断将消失）</p>'
               :'<p style="color:var(--muted);font-size:13px;margin:6px 0 0">称号：连续打卡满 7 天可获「'+esc(titleName())+'」</p>')+
     '</div>'+
+    renderCumulativeCard(days.size)+
     '<div class="card"><h4 style="margin:0 0 10px">用户名设置</h4>'+
       '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
         '<input type="text" id="username-input" maxlength="20" value="'+esc(u.username||'')+'" style="padding:10px 12px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;min-width:160px">'+
